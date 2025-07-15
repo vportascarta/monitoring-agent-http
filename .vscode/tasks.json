@@ -9,6 +9,15 @@
 			"problemMatcher": [
 				"$rustc"
 			]
+		},
+		{
+			"type": "shell",
+			"label": "Build for Linux",
+			"command": "cargo build",
+			"group": "build",
+			"problemMatcher": [
+				"$rustc"
+			]
 		}
 	]
 }

@@ -1,0 +1,64 @@
+# GitHub Actions workflow to build Linux and Windows binaries and create a release
+# Place this file at .github/workflows/release.yml
+
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build Binaries
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [x86_64-unknown-linux-gnu, x86_64-pc-windows-gnu]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+          override: true
+      - name: Install build dependencies (Windows)
+        if: matrix.target == 'x86_64-pc-windows-gnu'
+        run: sudo apt-get update && sudo apt-get install -y mingw-w64
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+      - name: Rename artifact
+        run: |
+          if [ "${{ matrix.target }}" = "x86_64-pc-windows-gnu" ]; then
+            mv target/x86_64-pc-windows-gnu/release/monitoring-sofe.exe monitoring-sofe-windows.exe
+          else
+            mv target/x86_64-unknown-linux-gnu/release/monitoring-sofe monitoring-sofe-linux
+          fi
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}-binary
+          path: |
+            monitoring-sofe-windows.exe
+            monitoring-sofe-linux
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Gather binaries
+        run: |
+          mkdir release-binaries
+          find artifacts -name 'monitoring-sofe-*' -exec cp {} release-binaries/ \;
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-binaries/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,4 @@
+# Example config.toml
+app_port = 9090
+services = ["sshd", "Appinfo"]
+http_ports = { web = 80, api = 9090 }

@@ -1,0 +1,11 @@
+[package]
+name = "monitoring-sofe"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sysinfo = "0.36"
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.9"
+axum = "0.8"
+tokio = { version = "1", features = ["full"] }
